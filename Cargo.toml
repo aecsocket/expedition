@@ -9,10 +9,12 @@ repository = "https://github.com/aecsocket/expedition"
 license = "MIT OR Apache-2.0"
 
 [features]
+serde = [ "dep:serde", "ecolor/serde" ]
 termcolor = [ "dep:termcolor" ]
 egui = [ "dep:egui" ]
 
 [dependencies]
 ecolor = "0.22"
+serde = { version = "1", features = [ "derive" ], optional = true }
 termcolor = { version = "1", optional = true }
 egui = { version = "0.22", optional = true }

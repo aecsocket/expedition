@@ -1,8 +1,14 @@
+//! Features for writing out text messages as text using ANSI color codes, using [`termcolor`].
+
 use termcolor::{Color, ColorSpec, WriteColor};
 
 use crate::{prelude::*, util::StackFlattener};
 
 impl Text {
+    /// Writes this text message as a colored message to a [`termcolor::WriteColor`] object.
+    ///
+    /// This uses [`Text::flatten`] to convert from a node hierarchy to a linear sequence of
+    /// [`ColorSpec`]s and messages.
     pub fn write<W: WriteColor>(&self, writer: &mut W) {
         let mut flattener = StackFlattener::new(|content, style| {
             let _ = writer.set_color(

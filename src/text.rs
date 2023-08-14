@@ -1,3 +1,5 @@
+//! The core objects used by the library.
+
 use std::fmt;
 
 use crate::prelude::*;
@@ -6,59 +8,83 @@ use crate::prelude::*;
 
 /// Represents a generic rich text message, designed to be used as the intermediary format for
 /// text manipulation.
-/// 
+///
 /// This provides rich text features such as decoration and coloring, which you can easily create
 /// yourself via the builder-style APIs. The features available are designed to be simple and
 /// universal, so that as many different output modes as possible can be supported. For example,
 /// text can be converted to:
-/// 
 /// - a raw string
 /// - ANSI codes for printing to a terminal
 /// - a [`LayoutJob`] for [`egui`]
-/// 
+///
 /// The messages are stored in a tree structure, with one message capable of holding child nodes,
 /// which can be traversed and used for applying styling on top of existing styling.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// use expedition::prelude::*;
-/// 
+///
 /// // Create a new Text using `new`, passing an `Into<String>`
 /// let text1 = Text::new("Hello world!");
-/// 
+///
 /// // Or get one directly from a string
 /// let text2 = "Hello world!".into_text();
 /// assert_eq!(text1, text2);
-/// 
+///
 /// // Apply styling using a builder pattern
 /// let text1 = Text::new("Unstyled text, ")
 ///     .with(Text::new("red text, ").color(Color32::RED))
 ///     .with(Text::new("blue text").color(Color32::BLUE));
-/// 
+///
 /// // Which can be simplified to
 /// let text2 = "Unstyled text, "
 ///     .with("red text, ".color(Color32::RED))
 ///     .with("blue text".color(Color32::BLUE));
 /// assert_eq!(text1, text2);
-/// 
+///
 /// // Add decorations such as bold, italic, underline, and strikethrough
 /// let text = "Unstyled, "
 ///     .with("bold text, ".bold())
 ///     .with("italic text, ".italic())
 ///     .with("all the decorations".bold().italic().underline().strikethrough());
-/// 
+///
 /// // Styling from child nodes takes priority over parent nodes
 /// let text = "Red text, ".color(Color32::RED)
 ///     .with("still red text, ")
 ///     .with("red and italic, ".italic())
 ///     .with("blue and not italic".color(Color32::BLUE));
-/// 
+///
 /// // Or use `no_X()` to disable the decoration `X`
 /// let text = "Italic text, ".italic()
 ///     .with("not italic anymore".no_italic());
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+///
+/// # Output
+///
+/// ## To raw string
+///
+/// Text implements [`fmt::Display`], so just use [`ToString`] or as an argument in a [`format!`]
+/// call to get a raw string without any styling.
+///
+/// ```
+/// # use expedition::prelude::*;
+///
+/// let text = "Hello, "
+///     .with("world!");
+/// assert_eq!("Hello, world!", text.to_string());
+///
+/// let text = "This ignores all styling".color(Color32::RED).italic().bold();
+/// assert_eq!("This ignores all styling", text.to_string());
+/// ```
+///
+/// ## Other formats
+///
+/// See the documentation for the crate features to see usgae info for specific output formats.
+///
+/// [`LayoutJob`]: egui::text::LayoutJob
+/// ```
+#[derive(Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Text {
     /// What text this object holds.
@@ -70,7 +96,7 @@ pub struct Text {
 }
 
 /// Styling that is currently applied to the contents of a [`Text`].
-/// 
+///
 /// All styling elements are optional, as styles can be layered on top of one another through
 /// merging. Because of this, [`Default`] returns a style object that applies no styling changes
 /// to a piece of text - effectively an "identity style".
@@ -90,6 +116,9 @@ pub struct TextStyle {
 }
 
 impl Text {
+    /// Creates a new text message with default styling and no children.
+    ///
+    /// It is also possible to create text directly from an `Into<String>`.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
@@ -100,14 +129,14 @@ impl Text {
 }
 
 impl TextStyle {
+    /// Gets if this style is equivalent to the default text style - that is, a style which will
+    /// make no changes.
     pub fn is_default(&self) -> bool {
-        self.color.is_none()
-            && self.bold.is_none()
-            && self.italic.is_none()
-            && self.underline.is_none()
-            && self.strikethrough.is_none()
+        self == &Self::default()
     }
 
+    /// Merges another style into this one, with the values in `from` taking precedence over the
+    /// values in `self`.
     pub fn merge_from(&mut self, from: &Self) {
         self.color = from.color.or(self.color);
         self.bold = from.bold.or(self.bold);
@@ -116,6 +145,8 @@ impl TextStyle {
         self.strikethrough = from.strikethrough.or(self.strikethrough);
     }
 
+    /// Creates a new style which is the result of merging `from` on top of `self`, using
+    /// [`Self::merge_from`]
     pub fn merged_from(&self, from: &Self) -> Self {
         let mut res = self.clone();
         res.merge_from(from);
@@ -125,9 +156,12 @@ impl TextStyle {
 
 // text traits
 
+/// Used to create a [`Text`].
 pub trait TextBuilder: Sized {
+    /// Converts this object into a [`Text`].
     fn into_text(self) -> Text;
 
+    /// Appends `with` to the end of this text message.
     fn with(self, with: impl Into<Text>) -> Text {
         let mut text = self.into_text();
         text.children.push(with.into());
@@ -149,51 +183,67 @@ impl<T: Into<String>> From<T> for Text {
 
 // styling traits
 
+/// Used to apply styling to a text message.
 pub trait Styleable: Sized {
+    /// The resulting type of all operations.
     type Out;
 
+    /// Changes the color state.
     fn with_color(self, color: Option<Color32>) -> Self::Out;
 
+    /// Changes the bold state.
     fn with_bold(self, state: Option<bool>) -> Self::Out;
 
+    /// Changes the italic state.
     fn with_italic(self, state: Option<bool>) -> Self::Out;
 
+    /// Changes the underline state.
     fn with_underline(self, state: Option<bool>) -> Self::Out;
 
+    /// Changes the strikethrough state.
     fn with_strikethrough(self, state: Option<bool>) -> Self::Out;
 
+    /// Sets a color.
     fn color(self, color: Color32) -> Self::Out {
         self.with_color(Some(color))
     }
 
+    /// Sets bold to be enabled.
     fn bold(self) -> Self::Out {
         self.with_bold(Some(true))
     }
 
+    /// Sets bold to be disabled.
     fn no_bold(self) -> Self::Out {
         self.with_bold(Some(false))
     }
 
+    /// Sets italic to be enabled.
     fn italic(self) -> Self::Out {
         self.with_italic(Some(true))
     }
 
+    /// Sets italic to be disabled.
     fn no_italic(self) -> Self::Out {
         self.with_italic(Some(false))
     }
 
+    /// Sets underline to be enabled.
     fn underline(self) -> Self::Out {
         self.with_underline(Some(true))
     }
 
+    /// Sets underline to be disabled.
     fn no_underline(self) -> Self::Out {
         self.with_underline(Some(false))
     }
 
+    /// Sets strikethrough to be enabled.
     fn strikethrough(self) -> Self::Out {
         self.with_strikethrough(Some(true))
     }
 
+    /// Sets strikethrough to be disabled.
     fn no_strikethrough(self) -> Self::Out {
         self.with_strikethrough(Some(false))
     }
@@ -356,13 +406,35 @@ mod tests {
     use crate::prelude::*;
 
     #[test]
-    fn a() {
-        let text = ""
-            .italic()
-            .with("Hello ".with("lovely".underline()))
-            .with(" World!".no_italic().bold());
+    fn default() {
+        assert_eq!(
+            Text {
+                content: "".to_owned(),
+                style: TextStyle {
+                    color: None,
+                    bold: None,
+                    italic: None,
+                    underline: None,
+                    strikethrough: None
+                },
+                children: Vec::new(),
+            },
+            Text::default(),
+        );
+    }
 
-        println!("{:?}", text);
-        println!("{}", text);
+    #[test]
+    fn with() {
+        assert_eq!(
+            Text {
+                content: "one".to_owned(),
+                children: vec![
+                    Text::new("two"),
+                    Text::new("three"),
+                ],
+                ..Default::default()
+            },
+            "one".with("two").with("three"),
+        )
     }
 }

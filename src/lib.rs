@@ -6,6 +6,8 @@
 //! A simple and universal rich text styling library, designed to be easily adapted to any output
 //! format.
 //!
+//! Inspired by [KyoriPowered/adventure](https://github.com/KyoriPowered/adventure).
+//! 
 //! In many cases when user messages are involved (such as in games or user-editable text fields),
 //! you may wish to add some rich text styling options such as color, or decorations such as bold
 //! or italic. Although many libraries such as termcolor or egui already support styling text
@@ -13,8 +15,23 @@
 //! a universal format for transmitting and storing rich text messages, supporting a subset of
 //! common features that other libraries contain.
 //!
-//! This crate currently supports:
+//! # Usage
+//! 
+//! The entry point of the library is [`Text`]:
+//! 
+//! ```
+//! use expedition::prelude::*;
+//! 
+//! let text = Text::new("Hello, ")
+//!     .with(Text::new("world!"))
+//! ```
+//! 
+//! See the documentation of [`Text`] for usage info.
+//! 
+//! ## Feature flags
+#![cfg_attr(feature = "document_features", doc = document_features::document_features!())]
 //!
+//! [`Text`]: expedition::text::Text
 
 #[cfg(feature = "egui")]
 pub mod egui;

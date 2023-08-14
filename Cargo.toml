@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 description = "Rich text styling and formatting library"
 authors = [ "aecsocket <aecsocket@tutanota.com>" ]
-homepage = "https://github.com/aecsocket/expedition"
 repository = "https://github.com/aecsocket/expedition"
 keywords = [ "gamedev", "gui" ]
 categories = [ "game-development", "gui" ]

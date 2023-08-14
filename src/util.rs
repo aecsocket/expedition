@@ -70,6 +70,7 @@ pub trait TextFlattener {
 /// text.flatten(&mut flattener);
 /// assert_eq!(vec!["Unstyled ", "red ", "blue ", "italic ", "final"], all_content);
 /// ```
+#[derive(Debug)]
 pub struct StackFlattener<F> {
     style_stack: Vec<TextStyle>,
     consumer: F,

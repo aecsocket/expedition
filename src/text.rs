@@ -165,12 +165,12 @@ impl TextStyle {
 // text traits
 
 /// Used to create a [`Text`].
-pub trait TextBuilder: Sized {
+pub trait TextBuilder {
     /// Converts this object into a [`Text`].
     fn into_text(self) -> Text;
 
     /// Appends `with` to the end of this text message.
-    fn with(self, with: impl Into<Text>) -> Text {
+    fn with(self, with: impl Into<Text>) -> Text where Self: Sized {
         let mut text = self.into_text();
         text.children.push(with.into());
         text
@@ -192,7 +192,7 @@ impl<T: Into<String>> From<T> for Text {
 // styling traits
 
 /// Used to apply styling to a text message.
-pub trait Styleable: Sized {
+pub trait Styleable {
     /// The resulting type of all operations.
     type Out;
 
@@ -212,47 +212,47 @@ pub trait Styleable: Sized {
     fn with_strikethrough(self, state: Option<bool>) -> Self::Out;
 
     /// Sets a color.
-    fn color(self, color: Color32) -> Self::Out {
+    fn color(self, color: Color32) -> Self::Out where Self: Sized {
         self.with_color(Some(color))
     }
 
     /// Sets bold to be enabled.
-    fn bold(self) -> Self::Out {
+    fn bold(self) -> Self::Out where Self: Sized {
         self.with_bold(Some(true))
     }
 
     /// Sets bold to be disabled.
-    fn no_bold(self) -> Self::Out {
+    fn no_bold(self) -> Self::Out where Self: Sized {
         self.with_bold(Some(false))
     }
 
     /// Sets italic to be enabled.
-    fn italic(self) -> Self::Out {
+    fn italic(self) -> Self::Out where Self: Sized {
         self.with_italic(Some(true))
     }
 
     /// Sets italic to be disabled.
-    fn no_italic(self) -> Self::Out {
+    fn no_italic(self) -> Self::Out where Self: Sized {
         self.with_italic(Some(false))
     }
 
     /// Sets underline to be enabled.
-    fn underline(self) -> Self::Out {
+    fn underline(self) -> Self::Out where Self: Sized {
         self.with_underline(Some(true))
     }
 
     /// Sets underline to be disabled.
-    fn no_underline(self) -> Self::Out {
+    fn no_underline(self) -> Self::Out where Self: Sized {
         self.with_underline(Some(false))
     }
 
     /// Sets strikethrough to be enabled.
-    fn strikethrough(self) -> Self::Out {
+    fn strikethrough(self) -> Self::Out where Self: Sized {
         self.with_strikethrough(Some(true))
     }
 
     /// Sets strikethrough to be disabled.
-    fn no_strikethrough(self) -> Self::Out {
+    fn no_strikethrough(self) -> Self::Out where Self: Sized {
         self.with_strikethrough(Some(false))
     }
 }

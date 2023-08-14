@@ -4,7 +4,9 @@ use crate::prelude::*;
 
 // core types
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// Represents a generic rich text message, designed to be used as the intermediary format for
+/// text manipulation. This provides simple yet universal rich-text features
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Text {
     pub content: String,
     pub style: TextStyle,
@@ -21,7 +23,7 @@ impl Text {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, PartialEq, Eq, Hash, Default)]
 pub struct TextStyle {
     pub color: Option<Color32>,
     pub bold: StyleState,
@@ -211,9 +213,9 @@ impl<T: Into<Text>> Styleable for T {
     }
 }
 
-// display
+// display + debug
 
-impl fmt::Display for Text {
+impl fmt::Debug for Text {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let content = if self.content.is_empty() {
             None
@@ -224,20 +226,13 @@ impl fmt::Display for Text {
         let style = if self.style.is_default() {
             None
         } else {
-            Some(format!("{}", self.style))
+            Some(format!("{:?}", self.style))
         };
 
         let children = if self.children.is_empty() {
             None
         } else {
-            Some(format!(
-                "[{}]",
-                self.children
-                    .iter()
-                    .map(|c| c.to_string())
-                    .intersperse(", ".to_owned())
-                    .collect::<String>(),
-            ))
+            Some(format!("{:?}", self.children))
         };
 
         let parts: Vec<String> = [content, style, children].into_iter().flatten().collect();
@@ -257,7 +252,7 @@ impl fmt::Display for Text {
     }
 }
 
-impl fmt::Display for TextStyle {
+impl fmt::Debug for TextStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn decoration(state: StyleState, name: &'static str) -> Option<String> {
             use StyleState::*;
@@ -287,6 +282,29 @@ impl fmt::Display for TextStyle {
     }
 }
 
+impl fmt::Display for Text {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        #[derive(Default)]
+        struct Flattener {
+            buf: String,
+        }
+
+        impl TextFlattener for Flattener {
+            fn push_style(&mut self, _: &TextStyle) {}
+
+            fn content(&mut self, content: &str) {
+                self.buf.push_str(content);
+            }
+
+            fn pop_style(&mut self, _: &TextStyle) {}
+        }
+
+        let mut flattener = Flattener::default();
+        self.flatten(&mut flattener);
+        write!(f, "{}", flattener.buf)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
@@ -298,6 +316,7 @@ mod tests {
             .with("Hello ".with("lovely".underline()))
             .with(" World!".no_italic().bold());
 
+        println!("{:?}", text);
         println!("{}", text);
     }
 }

@@ -1,7 +1,13 @@
-use egui::{text::LayoutJob, Stroke, TextFormat, FontId, Align};
+use egui::{text::LayoutJob, Align, FontId, Stroke, TextFormat};
 
 use crate::prelude::*;
 
+/// Defines how to convert a [TextStyle] into [TextFormat] for egui, allowing you to specify
+/// defaults for fields which [TextStyle] doesn't support.
+///
+/// # Usage
+///
+///
 pub struct TextStyleJob {
     pub font_id: FontId,
     pub background: Color32,
@@ -47,11 +53,7 @@ impl TextStyleJob {
     pub fn to_job(&self, text: &Text) -> LayoutJob {
         let mut job = LayoutJob::default();
         let mut flattener = StackFlattener::new(|content, style| {
-            job.append(
-                content,
-                0.0,
-                self.to_format(style),
-            );
+            job.append(content, 0.0, self.to_format(style));
         });
         text.flatten(&mut flattener);
         job

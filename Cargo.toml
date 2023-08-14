@@ -1,0 +1,18 @@
+[package]
+name = "expedition"
+version = "0.1.0"
+edition = "2021"
+authors = [ "aecsocket <aecsocket@tutanota.com>" ]
+description = "Rich text styling and formatting library"
+homepage = "https://github.com/aecsocket/expedition"
+repository = "https://github.com/aecsocket/expedition"
+license = "MIT OR Apache-2.0"
+
+[features]
+termcolor = [ "dep:termcolor" ]
+egui = [ "dep:egui" ]
+
+[dependencies]
+ecolor = "0.22"
+termcolor = { version = "1", optional = true }
+egui = { version = "0.22", optional = true }

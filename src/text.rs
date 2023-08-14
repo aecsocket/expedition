@@ -130,6 +130,11 @@ impl Text {
 }
 
 impl TextStyle {
+    /// Creates a new text style from the defaults.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Gets if this style is equivalent to the default text style - that is, a style which will
     /// make no changes.
     #[must_use]

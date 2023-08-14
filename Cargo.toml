@@ -15,7 +15,7 @@ all-features = true
 
 [features]
 ## Allows serialization using [`serde`](https://docs.rs/serde).
-serde = [ "dep:serde", "ecolor/serde" ]
+serde = [ "dep:serde", "ecolor/serde", "egui/serde" ]
 
 ## Allows output to a terminal using ANSI color codes from [`termcolor`](https://docs.rs/termcolor).
 termcolor = [ "dep:termcolor" ]

@@ -56,6 +56,8 @@ use crate::prelude::*;
 ///         .underline()),
 /// );
 /// ```
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StyleToFormat {
     /// [`TextFormat::font_id`]
     pub font_id: FontId,

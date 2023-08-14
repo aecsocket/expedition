@@ -8,10 +8,10 @@ impl Text {
             let _ = writer.set_color(
                 ColorSpec::new()
                     .set_fg(style.color.map(|c| Color::Rgb(c.r(), c.g(), c.b())))
-                    .set_bold(style.bold == StyleState::On)
-                    .set_italic(style.italic == StyleState::On)
-                    .set_underline(style.underline == StyleState::On)
-                    .set_strikethrough(style.strikethrough == StyleState::On),
+                    .set_bold(style.bold == Some(true))
+                    .set_italic(style.italic == Some(true))
+                    .set_underline(style.underline == Some(true))
+                    .set_strikethrough(style.strikethrough == Some(true)),
             );
             let _ = write!(writer, "{}", content);
         });

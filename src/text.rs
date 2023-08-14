@@ -80,25 +80,13 @@ pub struct TextStyle {
     /// Foreground text color.
     pub color: Option<Color32>,
     /// Bold decoration.
-    pub bold: StyleState,
+    pub bold: Option<bool>,
     /// Italic decoration.
-    pub italic: StyleState,
+    pub italic: Option<bool>,
     /// Underline decoration.
-    pub underline: StyleState,
+    pub underline: Option<bool>,
     /// Strikethrough decoration.
-    pub strikethrough: StyleState,
-}
-
-/// A tri-state for if a piece of styling should be applied.
-/// 
-/// Since styles can be inherited from 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum StyleState {
-    #[default]
-    Inherit,
-    On,
-    Off,
+    pub strikethrough: Option<bool>,
 }
 
 impl Text {
@@ -114,28 +102,18 @@ impl Text {
 impl TextStyle {
     pub fn is_default(&self) -> bool {
         self.color.is_none()
-            && self.bold == StyleState::default()
-            && self.italic == StyleState::default()
-            && self.underline == StyleState::default()
-            && self.strikethrough == StyleState::default()
+            && self.bold.is_none()
+            && self.italic.is_none()
+            && self.underline.is_none()
+            && self.strikethrough.is_none()
     }
 
     pub fn merge_from(&mut self, from: &Self) {
-        fn decoration(this: StyleState, from: StyleState) -> StyleState {
-            match from {
-                StyleState::Inherit => this,
-                state => state,
-            }
-        }
-
-        self.color = match from.color {
-            Some(t) => Some(t),
-            None => self.color,
-        };
-        self.bold = decoration(self.bold, from.bold);
-        self.italic = decoration(self.italic, from.italic);
-        self.underline = decoration(self.underline, from.underline);
-        self.strikethrough = decoration(self.strikethrough, from.strikethrough);
+        self.color = from.color.or(self.color);
+        self.bold = from.bold.or(self.bold);
+        self.italic = from.italic.or(self.italic);
+        self.underline = from.underline.or(self.underline);
+        self.strikethrough = from.strikethrough.or(self.strikethrough);
     }
 
     pub fn merged_from(&self, from: &Self) -> Self {
@@ -176,48 +154,48 @@ pub trait Styleable: Sized {
 
     fn with_color(self, color: Option<Color32>) -> Self::Out;
 
-    fn with_bold(self, state: StyleState) -> Self::Out;
+    fn with_bold(self, state: Option<bool>) -> Self::Out;
 
-    fn with_italic(self, state: StyleState) -> Self::Out;
+    fn with_italic(self, state: Option<bool>) -> Self::Out;
 
-    fn with_underline(self, state: StyleState) -> Self::Out;
+    fn with_underline(self, state: Option<bool>) -> Self::Out;
 
-    fn with_strikethrough(self, state: StyleState) -> Self::Out;
+    fn with_strikethrough(self, state: Option<bool>) -> Self::Out;
 
     fn color(self, color: Color32) -> Self::Out {
         self.with_color(Some(color))
     }
 
     fn bold(self) -> Self::Out {
-        self.with_bold(StyleState::On)
+        self.with_bold(Some(true))
     }
 
     fn no_bold(self) -> Self::Out {
-        self.with_bold(StyleState::Off)
+        self.with_bold(Some(false))
     }
 
     fn italic(self) -> Self::Out {
-        self.with_italic(StyleState::On)
+        self.with_italic(Some(true))
     }
 
     fn no_italic(self) -> Self::Out {
-        self.with_italic(StyleState::Off)
+        self.with_italic(Some(false))
     }
 
     fn underline(self) -> Self::Out {
-        self.with_underline(StyleState::On)
+        self.with_underline(Some(true))
     }
 
     fn no_underline(self) -> Self::Out {
-        self.with_underline(StyleState::Off)
+        self.with_underline(Some(false))
     }
 
     fn strikethrough(self) -> Self::Out {
-        self.with_strikethrough(StyleState::On)
+        self.with_strikethrough(Some(true))
     }
 
     fn no_strikethrough(self) -> Self::Out {
-        self.with_strikethrough(StyleState::Off)
+        self.with_strikethrough(Some(false))
     }
 }
 
@@ -229,22 +207,22 @@ impl Styleable for TextStyle {
         self
     }
 
-    fn with_bold(mut self, state: StyleState) -> Self::Out {
+    fn with_bold(mut self, state: Option<bool>) -> Self::Out {
         self.bold = state;
         self
     }
 
-    fn with_italic(mut self, state: StyleState) -> Self::Out {
+    fn with_italic(mut self, state: Option<bool>) -> Self::Out {
         self.italic = state;
         self
     }
 
-    fn with_underline(mut self, state: StyleState) -> Self::Out {
+    fn with_underline(mut self, state: Option<bool>) -> Self::Out {
         self.underline = state;
         self
     }
 
-    fn with_strikethrough(mut self, state: StyleState) -> Self::Out {
+    fn with_strikethrough(mut self, state: Option<bool>) -> Self::Out {
         self.strikethrough = state;
         self
     }
@@ -259,25 +237,25 @@ impl<T: Into<Text>> Styleable for T {
         text
     }
 
-    fn with_bold(self, state: StyleState) -> Self::Out {
+    fn with_bold(self, state: Option<bool>) -> Self::Out {
         let mut text = self.into();
         text.style.bold = state;
         text
     }
 
-    fn with_italic(self, state: StyleState) -> Self::Out {
+    fn with_italic(self, state: Option<bool>) -> Self::Out {
         let mut text = self.into();
         text.style.italic = state;
         text
     }
 
-    fn with_underline(self, state: StyleState) -> Self::Out {
+    fn with_underline(self, state: Option<bool>) -> Self::Out {
         let mut text = self.into();
         text.style.underline = state;
         text
     }
 
-    fn with_strikethrough(self, state: StyleState) -> Self::Out {
+    fn with_strikethrough(self, state: Option<bool>) -> Self::Out {
         let mut text = self.into();
         text.style.strikethrough = state;
         text
@@ -325,14 +303,11 @@ impl fmt::Debug for Text {
 
 impl fmt::Debug for TextStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn decoration(state: StyleState, name: &'static str) -> Option<String> {
-            use StyleState::*;
-
-            match state {
-                Inherit => None,
-                On => Some(name.to_owned()),
-                Off => Some(format!("!{}", name)),
-            }
+        fn decoration(state: Option<bool>, name: &'static str) -> Option<String> {
+            state.map(|value| match value {
+                true => name.to_owned(),
+                false => format!("!{}", name),
+            })
         }
 
         let color = self.color.map(|color| format!("{:?}", color));

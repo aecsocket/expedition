@@ -12,6 +12,6 @@ pub mod util;
 pub mod prelude {
     pub use ecolor::Color32;
 
-    pub use crate::text::{StyleState, Styleable, Text, TextBuilder, TextStyle};
+    pub use crate::text::{Styleable, Text, TextBuilder, TextStyle};
     pub use crate::util::{StackFlattener, TextFlattener};
 }

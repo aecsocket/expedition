@@ -37,13 +37,13 @@ impl TextStyleJob {
             font_id: self.font_id.clone(),
             color: foreground,
             background: self.background,
-            italics: style.italic == StyleState::On,
+            italics: style.italic == Some(true),
             underline: match style.underline {
-                StyleState::On => Stroke::new(self.underline_width, foreground),
+                Some(true) => Stroke::new(self.underline_width, foreground),
                 _ => Stroke::NONE,
             },
             strikethrough: match style.strikethrough {
-                StyleState::On => Stroke::new(self.strikethrough_width, foreground),
+                Some(true) => Stroke::new(self.strikethrough_width, foreground),
                 _ => Stroke::NONE,
             },
             valign: self.valign,

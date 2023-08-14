@@ -36,7 +36,7 @@
 #[cfg(feature = "egui")]
 pub mod egui;
 #[cfg(feature = "termcolor")]
-pub mod term;
+pub mod termcolor;
 pub mod text;
 pub mod util;
 

@@ -20,7 +20,7 @@ impl Text {
         flattener.push_style(&self.style);
 
         flattener.content(&self.content);
-        for child in self.children.iter() {
+        for child in &self.children {
             child.flatten(flattener);
         }
 
@@ -77,7 +77,7 @@ pub struct StackFlattener<F> {
 
 impl<F> StackFlattener<F>
 where
-    F: FnMut(&str, &TextStyle) -> (),
+    F: FnMut(&str, &TextStyle),
 {
     /// Creates a new flattener with an empty style stack, and taking in the consumer that is
     /// called when content is encountered./
@@ -91,7 +91,7 @@ where
 
 impl<F> TextFlattener for StackFlattener<F>
 where
-    F: FnMut(&str, &TextStyle) -> (),
+    F: FnMut(&str, &TextStyle),
 {
     fn push_style(&mut self, style: &TextStyle) {
         self.style_stack.push(

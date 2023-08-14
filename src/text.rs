@@ -132,6 +132,7 @@ impl Text {
 impl TextStyle {
     /// Gets if this style is equivalent to the default text style - that is, a style which will
     /// make no changes.
+    #[must_use]
     pub fn is_default(&self) -> bool {
         self == &Self::default()
     }
@@ -148,6 +149,7 @@ impl TextStyle {
 
     /// Creates a new style which is the result of merging `from` on top of `self`, using
     /// [`Self::merge_from`]
+    #[must_use]
     pub fn merged_from(&self, from: &Self) -> Self {
         let mut res = self.clone();
         res.merge_from(from);
@@ -178,7 +180,7 @@ impl<T: Into<Text>> TextBuilder for T {
 
 impl<T: Into<String>> From<T> for Text {
     fn from(value: T) -> Self {
-        Text::new(value)
+        Self::new(value)
     }
 }
 
@@ -340,11 +342,7 @@ impl fmt::Debug for Text {
         if parts.len() == 1 {
             write!(f, "{}", parts[0])
         } else {
-            write!(
-                f,
-                "({})",
-                parts.into_iter().join(", "),
-            )
+            write!(f, "({})", parts.into_iter().join(", "))
         }
     }
 }
@@ -352,9 +350,10 @@ impl fmt::Debug for Text {
 impl fmt::Debug for TextStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn decoration(state: Option<bool>, name: &'static str) -> Option<String> {
-            state.map(|value| match value {
-                true => name.to_owned(),
-                false => format!("!{}", name),
+            state.map(|value| if value {
+                name.to_owned()
+            } else {
+                format!("!{}", name)
             })
         }
 
@@ -406,7 +405,7 @@ mod tests {
     fn default() {
         assert_eq!(
             Text {
-                content: "".to_owned(),
+                content: String::new(),
                 style: TextStyle {
                     color: None,
                     bold: None,

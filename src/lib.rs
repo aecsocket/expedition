@@ -1,9 +1,7 @@
-#![forbid(missing_docs)]
-#![forbid(clippy::all)]
-#![forbid(clippy::pedantic)]
-#![forbid(clippy::restriction)]
-#![forbid(clippy::nursery)]
-#![forbid(clippy::cargo)]
+#![warn(missing_docs)]
+#![warn(clippy::all)]
+#![warn(clippy::nursery)]
+#![warn(clippy::cargo)]
 
 //! A simple and universal rich text styling library, designed to be easily adapted to any output
 //! format.

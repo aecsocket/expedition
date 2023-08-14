@@ -15,6 +15,7 @@ egui = [ "dep:egui" ]
 
 [dependencies]
 ecolor = "0.22"
+itertools = "0.11"
 serde = { version = "1", features = [ "derive" ], optional = true }
 termcolor = { version = "1", optional = true }
 egui = { version = "0.22", optional = true }

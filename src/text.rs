@@ -3,6 +3,7 @@
 use std::fmt;
 
 use crate::prelude::*;
+use itertools::Itertools;
 
 // core types
 
@@ -342,10 +343,7 @@ impl fmt::Debug for Text {
             write!(
                 f,
                 "({})",
-                parts
-                    .into_iter()
-                    .intersperse("; ".to_owned())
-                    .collect::<String>(),
+                parts.into_iter().join(", "),
             )
         }
     }
@@ -372,8 +370,7 @@ impl fmt::Debug for TextStyle {
             [color, bold, italic, underline, strikethrough]
                 .into_iter()
                 .flatten()
-                .intersperse(" + ".to_owned())
-                .collect::<String>()
+                .join(" + "),
         )
     }
 }
@@ -428,10 +425,7 @@ mod tests {
         assert_eq!(
             Text {
                 content: "one".to_owned(),
-                children: vec![
-                    Text::new("two"),
-                    Text::new("three"),
-                ],
+                children: vec![Text::new("two"), Text::new("three"),],
                 ..Default::default()
             },
             "one".with("two").with("three"),

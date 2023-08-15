@@ -7,7 +7,7 @@
 //! format.
 //!
 //! Inspired by [KyoriPowered/adventure](https://github.com/KyoriPowered/adventure).
-//! 
+//!
 //! In many cases when user messages are involved (such as in games or user-editable text fields),
 //! you may wish to add some rich text styling options such as color, or decorations such as bold
 //! or italic. Although many libraries such as termcolor or egui already support styling text
@@ -16,22 +16,22 @@
 //! common features that other libraries contain.
 //!
 //! # Usage
-//! 
-//! The entry point of the library is [`Text`]:
-//! 
+//!
+//! The entry point of the library is [`Message`]:
+//!
 //! ```
-//! use expedition::prelude::*;
-//! 
-//! let text = Text::new("Hello, ")
-//!     .with(Text::new("world!"))
+//! use expedition::{Message, IntoMessage};
+//!
+//! let msg = Message::new("Hello, ")
+//!     .with(Message::new("world!"));
 //! ```
-//! 
-//! See the documentation of [`Text`] for usage info.
-//! 
+//!
+//! See the documentation of [`Message`] for usage info.
+//!
 //! ## Feature flags
 #![cfg_attr(feature = "document_features", doc = document_features::document_features!())]
 //!
-//! [`Text`]: expedition::text::Text
+//! [`Message`]: expedition::Message
 
 #[cfg(feature = "egui")]
 pub mod egui;
@@ -40,12 +40,6 @@ pub mod termcolor;
 pub mod text;
 pub mod util;
 
-/// The essential types for using the library.
-pub mod prelude {
-    pub use ecolor::Color32;
-
-    #[cfg(feature = "egui")]
-    pub use crate::egui::StyleToFormat;
-    pub use crate::text::{Styleable, Text, TextBuilder, TextStyle};
-    pub use crate::util::{StackFlattener, TextFlattener};
-}
+pub use ecolor::Color32;
+pub use text::{IntoMessage, Message, MessageStyle, Styleable};
+pub use util::{MessageFlattener, StackFlattener};

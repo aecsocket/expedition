@@ -2,9 +2,9 @@
 
 use termcolor::{Color, ColorSpec, WriteColor};
 
-use crate::{prelude::*, util::StackFlattener};
+use crate::{util::StackFlattener, Message};
 
-impl Text {
+impl Message {
     /// Writes this text message as a colored message to a [`termcolor::WriteColor`] object.
     ///
     /// This uses [`Text::flatten`] to convert from a node hierarchy to a linear sequence of
@@ -27,9 +27,11 @@ impl Text {
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use ecolor::Color32;
     use std::io::Write;
     use termcolor::{ColorChoice, StandardStream, WriteColor};
+
+    use crate::{IntoMessage, Styleable};
 
     #[test]
     fn a() {

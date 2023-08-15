@@ -1,16 +1,16 @@
 //! Features for converting objects to an [`egui`] format.
 
-use egui::{text::LayoutJob, Align, FontId, Stroke, TextFormat};
+use egui::{text::LayoutJob, Align, Color32, FontId, Stroke, TextFormat};
 
-use crate::prelude::*;
+use crate::{Message, MessageStyle, StackFlattener};
 
-/// Defines how to convert a [`TextStyle`] into [`TextFormat`] for egui.
+/// Defines how to convert a [`MessageStyle`] into [`TextFormat`] for egui.
 ///
-/// Since a [`TextStyle`] is a simpler and less featureful type than [`TextFormat`], we must
+/// Since a [`MessageStyle`] is a simpler and less featureful type than [`TextFormat`], we must
 /// provide some defaults if we want to convert the former into the latter. This struct provides
 /// the defaults that we use when converting.
 ///
-/// You can also use this to convert an entire [`Text`] into a [`LayoutJob`] using the same format
+/// You can also use this to convert an entire [`Message`] into a [`LayoutJob`] using the same format
 /// conversion.
 ///
 /// # Examples
@@ -20,10 +20,10 @@ use crate::prelude::*;
 /// use egui::{FontId, Stroke, TextFormat};
 ///
 /// let style_to_format = StyleToFormat {
-///     // you can't specify a font in `TextStyle`, so we specify a default here
+///     // you can't specify a font in `MessageStyle`, so we specify a default here
 ///     font_id: FontId::monospace(14.0),
 ///     // in egui, an underline is determined by a `Stroke` - no underline means `Stroke::NONE`
-///     // in `TextStyle`, underline is just a boolean
+///     // in `MessageStyle`, underline is just a boolean
 ///     // so here we define one property of the underline stroke, which will be created *if*
 ///     // the actual text object has an underline
 ///     // note that the color of all strokes is set to the text object's color
@@ -39,7 +39,7 @@ use crate::prelude::*;
 ///         underline: Stroke::NONE,
 ///         ..Default::default()
 ///     },
-///     style_to_format.to_format(&TextStyle::default()
+///     style_to_format.to_format(&MessageStyle::default()
 ///         .italic()),
 /// );
 ///
@@ -51,7 +51,7 @@ use crate::prelude::*;
 ///         color: Color32::RED,
 ///         ..Default::default()
 ///     },
-///     style_to_format.to_format(&TextStyle::default()
+///     style_to_format.to_format(&MessageStyle::default()
 ///         .color(Color32::RED)
 ///         .underline()),
 /// );
@@ -87,8 +87,8 @@ impl Default for StyleToFormat {
 }
 
 impl StyleToFormat {
-    /// Converts a [`TextStyle`] to a [`TextFormat`] using the defaults provided in this struct.
-    pub fn to_format(&self, style: &TextStyle) -> TextFormat {
+    /// Converts a [`MessageStyle`] to a [`TextFormat`] using the defaults provided in this struct.
+    pub fn to_format(&self, style: &MessageStyle) -> TextFormat {
         let foreground = style.color.unwrap_or(self.default_color);
         TextFormat {
             font_id: self.font_id.clone(),
@@ -107,10 +107,10 @@ impl StyleToFormat {
         }
     }
 
-    /// Converts a hierarchy of [`Text`] nodes to a sequence of [`LayoutJob`] styled sections.
+    /// Converts a hierarchy of [`Message`] nodes to a sequence of [`LayoutJob`] styled sections.
     ///
-    /// This uses [`Text::flatten`] to perform the conversion from hierarchy to [`LayoutJob::append`] calls.
-    pub fn to_job(&self, text: &Text) -> LayoutJob {
+    /// This uses [`Message::flatten`] to perform the conversion from hierarchy to [`LayoutJob::append`] calls.
+    pub fn to_job(&self, text: &Message) -> LayoutJob {
         let mut job = LayoutJob::default();
         let mut flattener = StackFlattener::new(|content, style| {
             job.append(content, 0.0, self.to_format(style));

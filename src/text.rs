@@ -2,8 +2,9 @@
 
 use std::fmt;
 
-use crate::prelude::*;
 use itertools::Itertools;
+
+use crate::{util::MessageFlattener, Color32};
 
 // core types
 
@@ -13,7 +14,7 @@ use itertools::Itertools;
 /// This provides rich text features such as decoration and coloring, which you can easily create
 /// yourself via the builder-style APIs. The features available are designed to be simple and
 /// universal, so that as many different output modes as possible can be supported. For example,
-/// text can be converted to:
+/// a message can be converted to:
 /// - a raw string
 /// - ANSI codes for printing to a terminal
 /// - a [`LayoutJob`] for [`egui`]
@@ -24,40 +25,44 @@ use itertools::Itertools;
 /// # Examples
 ///
 /// ```
-/// use expedition::prelude::*;
+/// use expedition::Message;
 ///
-/// // Create a new Text using `new`, passing an `Into<String>`
-/// let text1 = Text::new("Hello world!");
+/// // Create a new message using `new`, passing an `Into<String>`
+/// let msg1 = Message::new("Hello world!");
 ///
 /// // Or get one directly from a string
-/// let text2 = "Hello world!".into_text();
-/// assert_eq!(text1, text2);
+/// use expedition::IntoMessage;
+///
+/// let msg2 = "Hello world!".into_text();
+/// assert_eq!(msg1, msg2);
 ///
 /// // Apply styling using a builder pattern
-/// let text1 = Text::new("Unstyled text, ")
-///     .with(Text::new("red text, ").color(Color32::RED))
-///     .with(Text::new("blue text").color(Color32::BLUE));
+/// use expedition::{Color32, Styleable};
+///
+/// let msg1 = Message::new("Unstyled text, ")
+///     .with(Message::new("red text, ").color(Color32::RED))
+///     .with(Message::new("blue text").color(Color32::BLUE));
 ///
 /// // Which can be simplified to
-/// let text2 = "Unstyled text, "
+/// let msg2 = "Unstyled text, "
 ///     .with("red text, ".color(Color32::RED))
 ///     .with("blue text".color(Color32::BLUE));
-/// assert_eq!(text1, text2);
+/// assert_eq!(msg1, msg2);
 ///
 /// // Add decorations such as bold, italic, underline, and strikethrough
-/// let text = "Unstyled, "
+/// let msg = "Unstyled, "
 ///     .with("bold text, ".bold())
 ///     .with("italic text, ".italic())
 ///     .with("all the decorations".bold().italic().underline().strikethrough());
 ///
 /// // Styling from child nodes takes priority over parent nodes
-/// let text = "Red text, ".color(Color32::RED)
+/// let msg = "Red text, ".color(Color32::RED)
 ///     .with("still red text, ")
 ///     .with("red and italic, ".italic())
 ///     .with("blue and not italic".color(Color32::BLUE));
 ///
 /// // Or use `no_X()` to disable the decoration `X`
-/// let text = "Italic text, ".italic()
+/// let msg = "Italic text, ".italic()
 ///     .with("not italic anymore".no_italic());
 /// ```
 ///
@@ -65,45 +70,45 @@ use itertools::Itertools;
 ///
 /// ## To raw string
 ///
-/// Text implements [`fmt::Display`], so just use [`ToString`] or as an argument in a [`format!`]
+/// This implements [`fmt::Display`], so just use [`ToString`] or as an argument in a [`format!`]
 /// call to get a raw string without any styling.
 ///
 /// ```
-/// # use expedition::prelude::*;
+/// # use expedition::{Color32, IntoMessage, Styleable};
 ///
-/// let text = "Hello, "
+/// let msg = "Hello, "
 ///     .with("world!");
-/// assert_eq!("Hello, world!", text.to_string());
+/// assert_eq!("Hello, world!", msg.to_string());
 ///
-/// let text = "This ignores all styling".color(Color32::RED).italic().bold();
-/// assert_eq!("This ignores all styling", text.to_string());
+/// let msg = "This ignores all styling".color(Color32::RED).italic().bold();
+/// assert_eq!("This ignores all styling", msg.to_string());
 /// ```
 ///
 /// ## Other formats
 ///
-/// See the documentation for the crate features to see usgae info for specific output formats.
+/// See the documentation for the crate features to see usage info for specific output formats.
 ///
 /// [`LayoutJob`]: egui::text::LayoutJob
 /// ```
 #[derive(Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Text {
+pub struct Message {
     /// What text this object holds.
     pub content: String,
     /// Decoration and formatting applied to this text message.
-    pub style: TextStyle,
+    pub style: MessageStyle,
     /// Child text messages added on to this text.
-    pub children: Vec<Text>,
+    pub children: Vec<Message>,
 }
 
-/// Styling that is currently applied to the contents of a [`Text`].
+/// Styling that is currently applied to the contents of a [`Message`].
 ///
 /// All styling elements are optional, as styles can be layered on top of one another through
 /// merging. Because of this, [`Default`] returns a style object that applies no styling changes
-/// to a piece of text - effectively an "identity style".
+/// to a message - effectively an "identity style".
 #[derive(Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TextStyle {
+pub struct MessageStyle {
     /// Foreground text color.
     pub color: Option<Color32>,
     /// Bold decoration.
@@ -116,26 +121,26 @@ pub struct TextStyle {
     pub strikethrough: Option<bool>,
 }
 
-impl Text {
-    /// Creates a new text message with default styling and no children.
+impl Message {
+    /// Creates a new message with default styling and no children.
     ///
     /// It is also possible to create text directly from an `Into<String>`.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
-            style: TextStyle::default(),
+            style: MessageStyle::default(),
             children: Vec::new(),
         }
     }
 }
 
-impl TextStyle {
-    /// Creates a new text style from the defaults.
+impl MessageStyle {
+    /// Creates a new style from the defaults.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Gets if this style is equivalent to the default text style - that is, a style which will
+    /// Gets if this style is equivalent to the default style - that is, a style which will
     /// make no changes.
     #[must_use]
     pub fn is_default(&self) -> bool {
@@ -164,26 +169,29 @@ impl TextStyle {
 
 // text traits
 
-/// Used to create a [`Text`].
-pub trait TextBuilder {
-    /// Converts this object into a [`Text`].
-    fn into_text(self) -> Text;
+/// Used to create a [`Message`].
+pub trait IntoMessage {
+    /// Converts this object into a [`Message`].
+    fn into_text(self) -> Message;
 
-    /// Appends `with` to the end of this text message.
-    fn with(self, with: impl Into<Text>) -> Text where Self: Sized {
+    /// Appends `with` to the end of this message.
+    fn with(self, with: impl Into<Message>) -> Message
+    where
+        Self: Sized,
+    {
         let mut text = self.into_text();
         text.children.push(with.into());
         text
     }
 }
 
-impl<T: Into<Text>> TextBuilder for T {
-    fn into_text(self) -> Text {
+impl<T: Into<Message>> IntoMessage for T {
+    fn into_text(self) -> Message {
         self.into()
     }
 }
 
-impl<T: Into<String>> From<T> for Text {
+impl<T: Into<String>> From<T> for Message {
     fn from(value: T) -> Self {
         Self::new(value)
     }
@@ -191,7 +199,7 @@ impl<T: Into<String>> From<T> for Text {
 
 // styling traits
 
-/// Used to apply styling to a text message.
+/// Used to apply styling to a message.
 pub trait Styleable {
     /// The resulting type of all operations.
     type Out;
@@ -212,52 +220,79 @@ pub trait Styleable {
     fn with_strikethrough(self, state: Option<bool>) -> Self::Out;
 
     /// Sets a color.
-    fn color(self, color: Color32) -> Self::Out where Self: Sized {
+    fn color(self, color: Color32) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_color(Some(color))
     }
 
     /// Sets bold to be enabled.
-    fn bold(self) -> Self::Out where Self: Sized {
+    fn bold(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_bold(Some(true))
     }
 
     /// Sets bold to be disabled.
-    fn no_bold(self) -> Self::Out where Self: Sized {
+    fn no_bold(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_bold(Some(false))
     }
 
     /// Sets italic to be enabled.
-    fn italic(self) -> Self::Out where Self: Sized {
+    fn italic(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_italic(Some(true))
     }
 
     /// Sets italic to be disabled.
-    fn no_italic(self) -> Self::Out where Self: Sized {
+    fn no_italic(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_italic(Some(false))
     }
 
     /// Sets underline to be enabled.
-    fn underline(self) -> Self::Out where Self: Sized {
+    fn underline(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_underline(Some(true))
     }
 
     /// Sets underline to be disabled.
-    fn no_underline(self) -> Self::Out where Self: Sized {
+    fn no_underline(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_underline(Some(false))
     }
 
     /// Sets strikethrough to be enabled.
-    fn strikethrough(self) -> Self::Out where Self: Sized {
+    fn strikethrough(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_strikethrough(Some(true))
     }
 
     /// Sets strikethrough to be disabled.
-    fn no_strikethrough(self) -> Self::Out where Self: Sized {
+    fn no_strikethrough(self) -> Self::Out
+    where
+        Self: Sized,
+    {
         self.with_strikethrough(Some(false))
     }
 }
 
-impl Styleable for TextStyle {
+impl Styleable for MessageStyle {
     type Out = Self;
 
     fn with_color(mut self, color: Option<Color32>) -> Self::Out {
@@ -286,8 +321,8 @@ impl Styleable for TextStyle {
     }
 }
 
-impl<T: Into<Text>> Styleable for T {
-    type Out = Text;
+impl<T: Into<Message>> Styleable for T {
+    type Out = Message;
 
     fn with_color(self, color: Option<Color32>) -> Self::Out {
         let mut text = self.into();
@@ -322,7 +357,7 @@ impl<T: Into<Text>> Styleable for T {
 
 // display + debug
 
-impl fmt::Debug for Text {
+impl fmt::Debug for Message {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let content = if self.content.is_empty() {
             None
@@ -352,13 +387,15 @@ impl fmt::Debug for Text {
     }
 }
 
-impl fmt::Debug for TextStyle {
+impl fmt::Debug for MessageStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn decoration(state: Option<bool>, name: &'static str) -> Option<String> {
-            state.map(|value| if value {
-                name.to_owned()
-            } else {
-                format!("!{}", name)
+            state.map(|value| {
+                if value {
+                    name.to_owned()
+                } else {
+                    format!("!{}", name)
+                }
             })
         }
 
@@ -379,21 +416,21 @@ impl fmt::Debug for TextStyle {
     }
 }
 
-impl fmt::Display for Text {
+impl fmt::Display for Message {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         #[derive(Default)]
         struct Flattener {
             buf: String,
         }
 
-        impl TextFlattener for Flattener {
-            fn push_style(&mut self, _: &TextStyle) {}
+        impl MessageFlattener for Flattener {
+            fn push_style(&mut self, _: &MessageStyle) {}
 
             fn content(&mut self, content: &str) {
                 self.buf.push_str(content);
             }
 
-            fn pop_style(&mut self, _: &TextStyle) {}
+            fn pop_style(&mut self, _: &MessageStyle) {}
         }
 
         let mut flattener = Flattener::default();
@@ -404,14 +441,14 @@ impl fmt::Display for Text {
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{IntoMessage, Message, MessageStyle};
 
     #[test]
     fn default() {
         assert_eq!(
-            Text {
+            Message {
                 content: String::new(),
-                style: TextStyle {
+                style: MessageStyle {
                     color: None,
                     bold: None,
                     italic: None,
@@ -420,16 +457,16 @@ mod tests {
                 },
                 children: Vec::new(),
             },
-            Text::default(),
+            Message::default(),
         );
     }
 
     #[test]
     fn with() {
         assert_eq!(
-            Text {
+            Message {
                 content: "one".to_owned(),
-                children: vec![Text::new("two"), Text::new("three"),],
+                children: vec![Message::new("two"), Message::new("three"),],
                 ..Default::default()
             },
             "one".with("two").with("three"),

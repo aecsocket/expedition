@@ -31,7 +31,7 @@
 //! ## Feature flags
 #![cfg_attr(feature = "document_features", doc = document_features::document_features!())]
 //!
-//! [`Message`]: expedition::Message
+//! [`Message`]: crate::Message
 
 #[cfg(feature = "egui")]
 pub mod egui;

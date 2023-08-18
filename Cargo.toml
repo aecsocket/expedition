@@ -1,6 +1,6 @@
 [package]
 name = "expedition"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Rich text styling and formatting library"
 authors = [ "aecsocket <aecsocket@tutanota.com>" ]

@@ -7,9 +7,9 @@ impl Message {
     ///
     /// This function traverses the tree of message nodes via a depth-first method, starting
     /// with `self` as the root, and on each node providing the `flattener` with:
-    /// - [`TextFlattener::push_style`]: the style of the node entered
-    /// - [`TextFlattener::content`]: the content of the node
-    /// - [`TextFlattener::pop_style`]: the style of the node exited
+    /// - [`MessageFlattener::push_style`]: the style of the node entered
+    /// - [`MessageFlattener::content`]: the content of the node
+    /// - [`MessageFlattener::pop_style`]: the style of the node exited
     ///
     /// The push/pop functions can be used to implement a style stack, from which the topmost
     /// style can be computed. Combining this with the content, you effectively have access to
@@ -17,27 +17,27 @@ impl Message {
     ///
     /// To see an implemention which already has the style stack, see [`StackFlattener`].
     pub fn flatten<F: MessageFlattener>(&self, flattener: &mut F) {
-        flattener.push_style(&self.style);
+        flattener.push_style(self.style);
 
         flattener.content(&self.content);
         for child in &self.children {
             child.flatten(flattener);
         }
 
-        flattener.pop_style(&self.style);
+        flattener.pop_style(self.style);
     }
 }
 
 /// Functions called when flattening a hierarchy of [`Message`] nodes using [`Message::flatten`].
 pub trait MessageFlattener {
     /// Called when a new style is entered.
-    fn push_style(&mut self, style: &MessageStyle);
+    fn push_style(&mut self, style: MessageStyle);
 
     /// Called when a new piece of text content is encountered.
     fn content(&mut self, content: &str);
 
     /// Called when exiting a style that we previously entered.
-    fn pop_style(&mut self, style: &MessageStyle);
+    fn pop_style(&mut self, style: MessageStyle);
 }
 
 /// A [`MessageFlattener`] implementation which maintains a stack of [`MessageStyle`]s internally,
@@ -77,7 +77,7 @@ pub struct StackFlattener<F> {
 
 impl<F> StackFlattener<F>
 where
-    F: FnMut(&str, &MessageStyle),
+    F: FnMut(&str, MessageStyle),
 {
     /// Creates a new flattener with an empty style stack, and taking in the consumer that is
     /// called when content is encountered.
@@ -91,9 +91,9 @@ where
 
 impl<F> MessageFlattener for StackFlattener<F>
 where
-    F: FnMut(&str, &MessageStyle),
+    F: FnMut(&str, MessageStyle),
 {
-    fn push_style(&mut self, style: &MessageStyle) {
+    fn push_style(&mut self, style: MessageStyle) {
         self.style_stack.push(
             self.style_stack
                 .last()
@@ -105,10 +105,10 @@ where
     fn content(&mut self, content: &str) {
         let default_style = MessageStyle::default();
         let style = self.style_stack.last().unwrap_or(&default_style);
-        (self.consumer)(content, style);
+        (self.consumer)(content, *style);
     }
 
-    fn pop_style(&mut self, _: &MessageStyle) {
+    fn pop_style(&mut self, _: MessageStyle) {
         self.style_stack.pop();
     }
 }

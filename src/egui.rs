@@ -16,7 +16,7 @@ use crate::{Message, MessageStyle, StackFlattener};
 /// # Examples
 ///
 /// ```
-/// use expedition::prelude::*;
+/// use expedition::{egui::StyleToFormat, Color32, MessageStyle, Styleable};
 /// use egui::{FontId, Stroke, TextFormat};
 ///
 /// let style_to_format = StyleToFormat {
@@ -39,7 +39,7 @@ use crate::{Message, MessageStyle, StackFlattener};
 ///         underline: Stroke::NONE,
 ///         ..Default::default()
 ///     },
-///     style_to_format.to_format(&MessageStyle::default()
+///     style_to_format.to_format(MessageStyle::default()
 ///         .italic()),
 /// );
 ///
@@ -51,7 +51,7 @@ use crate::{Message, MessageStyle, StackFlattener};
 ///         color: Color32::RED,
 ///         ..Default::default()
 ///     },
-///     style_to_format.to_format(&MessageStyle::default()
+///     style_to_format.to_format(MessageStyle::default()
 ///         .color(Color32::RED)
 ///         .underline()),
 /// );
@@ -88,7 +88,7 @@ impl Default for StyleToFormat {
 
 impl StyleToFormat {
     /// Converts a [`MessageStyle`] to a [`TextFormat`] using the defaults provided in this struct.
-    pub fn to_format(&self, style: &MessageStyle) -> TextFormat {
+    pub fn to_format(&self, style: MessageStyle) -> TextFormat {
         let foreground = style.color.unwrap_or(self.default_color);
         TextFormat {
             font_id: self.font_id.clone(),

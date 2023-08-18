@@ -88,8 +88,8 @@ use crate::{util::MessageFlattener, Color32};
 ///
 /// See the documentation for the crate features to see usage info for specific output formats.
 ///
-/// [`LayoutJob`]: egui::text::LayoutJob
-/// ```
+/// [`egui`]: https://docs.rs/egui
+/// [`LayoutJob`]: https://docs.rs/egui/text/struct.LayoutJob.html
 #[derive(Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
@@ -106,7 +106,7 @@ pub struct Message {
 /// All styling elements are optional, as styles can be layered on top of one another through
 /// merging. Because of this, [`Default`] returns a style object that applies no styling changes
 /// to a message - effectively an "identity style".
-#[derive(Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageStyle {
     /// Foreground text color.
@@ -149,7 +149,7 @@ impl MessageStyle {
 
     /// Merges another style into this one, with the values in `from` taking precedence over the
     /// values in `self`.
-    pub fn merge_from(&mut self, from: &Self) {
+    pub fn merge_from(&mut self, from: Self) {
         self.color = from.color.or(self.color);
         self.bold = from.bold.or(self.bold);
         self.italic = from.italic.or(self.italic);
@@ -160,8 +160,8 @@ impl MessageStyle {
     /// Creates a new style which is the result of merging `from` on top of `self`, using
     /// [`Self::merge_from`]
     #[must_use]
-    pub fn merged_from(&self, from: &Self) -> Self {
-        let mut res = self.clone();
+    pub fn merged_from(self, from: Self) -> Self {
+        let mut res = self;
         res.merge_from(from);
         res
     }
@@ -203,6 +203,9 @@ impl<T: Into<String>> From<T> for Message {
 pub trait Styleable {
     /// The resulting type of all operations.
     type Out;
+
+    /// Applies a new style on top of this.
+    fn with_style(self, style: MessageStyle) -> Self::Out;
 
     /// Changes the color state.
     fn with_color(self, color: Option<Color32>) -> Self::Out;
@@ -295,6 +298,10 @@ pub trait Styleable {
 impl Styleable for MessageStyle {
     type Out = Self;
 
+    fn with_style(self, style: MessageStyle) -> Self::Out {
+        style
+    }
+
     fn with_color(mut self, color: Option<Color32>) -> Self::Out {
         self.color = color;
         self
@@ -323,6 +330,12 @@ impl Styleable for MessageStyle {
 
 impl<T: Into<Message>> Styleable for T {
     type Out = Message;
+
+    fn with_style(self, style: MessageStyle) -> Self::Out {
+        let mut text = self.into();
+        text.style = style;
+        text
+    }
 
     fn with_color(self, color: Option<Color32>) -> Self::Out {
         let mut text = self.into();
@@ -424,13 +437,13 @@ impl fmt::Display for Message {
         }
 
         impl MessageFlattener for Flattener {
-            fn push_style(&mut self, _: &MessageStyle) {}
+            fn push_style(&mut self, _: MessageStyle) {}
 
             fn content(&mut self, content: &str) {
                 self.buf.push_str(content);
             }
 
-            fn pop_style(&mut self, _: &MessageStyle) {}
+            fn pop_style(&mut self, _: MessageStyle) {}
         }
 
         let mut flattener = Flattener::default();
